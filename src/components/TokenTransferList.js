@@ -16,12 +16,17 @@ import {
   Pagination,
   TextField,
 } from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker"; // From MUI X package
+import { DatePicker } from "@mui/x-date-pickers/DatePicker"; 
 import dayjs from "dayjs";
 
 const TokenTransferList = () => {
+  // For no search queries applied
   const [transactionsLoading, setTransactionsLoading] = useState(false);
   const [transactions, setTransactions] = useState([]);
+
+  // For when any search query is applied
+  const [searchTransactions, setSearchTransactions] = useState([]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [noMoreData, setNoMoreData] = useState(false);
@@ -29,8 +34,10 @@ const TokenTransferList = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null); 
 
+  const startAndEndNotIncomplete = (startDate === null && endDate === null) || (startDate !== null && endDate !== null);
+
   useEffect(() =>{
-    fetchTransactions();
+    if (!searchHash && startAndEndNotIncomplete) fetchTransactions();
   }, [currentPage, pageSize]); // to handle changing pages too
 
   const fetchTransactions = async () => {
@@ -52,14 +59,15 @@ const TokenTransferList = () => {
         `${process.env.REACT_APP_SERVER_URL}/transaction/getHistory`,
         { params }
       );
-      if (response.data.length === 0) {
-        setNoMoreData(true);
+      
+      if (searchHash || (startDate && endDate)) {
+        setSearchTransactions(response.data);
+        paginateSearchTransactions(response.data, 1); 
       } else {
-        setTransactions(response.data);
-        setNoMoreData(false);
+        setNoMoreData(response.data.length === pageSize);
+        setTransactions(response.data); 
       }
       setTransactionsLoading(false);
-      setTransactions(response.data);
     } catch (error) {
       setNoMoreData(true);
       setTransactionsLoading(false);
@@ -67,8 +75,24 @@ const TokenTransferList = () => {
     }
   };
 
+  const paginateSearchTransactions = (allData, page) => {
+    const startIndex = (page - 1) * pageSize;
+    const paginatedData = allData.slice(startIndex, startIndex + pageSize);
+    setTransactions(paginatedData); 
+  };
+
   const handleNextPage = () => {
-    setCurrentPage((prevPage) => prevPage + 1);
+    if (searchHash) {
+      const nextPage = currentPage + 1;
+      if (nextPage <= Math.ceil(searchTransactions.length / pageSize)) {
+        setCurrentPage(nextPage);
+        paginateSearchTransactions(searchTransactions, nextPage);
+      } else {
+        setNoMoreData(true);
+      }
+    } else {
+      setCurrentPage((prevPage) => prevPage + 1);
+    }
   };
 
   const handlePreviousPage = () => {
@@ -78,6 +102,7 @@ const TokenTransferList = () => {
   };
 
   const handleSearch = () => {
+    setNoMoreData(false);
     fetchTransactions();
     setCurrentPage(1);
   };
