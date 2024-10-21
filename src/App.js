@@ -1,11 +1,13 @@
 import './App.css';
 import TokenTransferComponent from './components/TokenTransferList';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 function App() {
   return (
-    <div>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
       <TokenTransferComponent/>
-    </div>
+    </LocalizationProvider>
   );
 }
 
