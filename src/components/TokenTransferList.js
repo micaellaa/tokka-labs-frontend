@@ -18,8 +18,12 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
+import { useRealtimeTxns } from "../hooks/useRealtimeTxns";
+import io from "socket.io-client";
 
 const TokenTransferList = () => {
+  const { transactions: realtimeTxns } = useRealtimeTxns();
+
   // For no search queries applied
   const [transactionsLoading, setTransactionsLoading] = useState(false);
   const [transactions, setTransactions] = useState([]);
@@ -34,6 +38,7 @@ const TokenTransferList = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
 
+  
   const startAndEndNotIncomplete =
     (startDate === null && endDate === null) ||
     (startDate !== null && endDate !== null);
@@ -61,6 +66,8 @@ const TokenTransferList = () => {
         `${process.env.REACT_APP_SERVER_URL}/transaction/getHistory`,
         { params }
       );
+
+      console.log(response.data)
 
       if (searchHash || (startDate && endDate)) {
         setSearchTransactions(response.data);
@@ -175,7 +182,7 @@ const TokenTransferList = () => {
             <TableBody>
               {transactions.length > 0 ? (
                 transactions.map((tx) => (
-                  <TableRow key={tx.blockHash}>
+                  <TableRow>
                     <TableCell>{tx.hash.slice(0, 20)}...</TableCell>
                     <TableCell>{tx.feeETH}</TableCell>
                     <TableCell>{tx.feeUSDT}</TableCell>
