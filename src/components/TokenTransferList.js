@@ -1,7 +1,8 @@
 // TokenTransferComponent.js
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import {
+  Box,
   Button,
   Stack,
   CircularProgress,
@@ -11,6 +12,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tabs,
+  Tab,
   Paper,
   Typography,
   Pagination,
@@ -22,14 +25,14 @@ import { useRealtimeSwaps } from "../hooks/useRealtimeSwaps";
 import { useRealtimeTransfers } from "../hooks/useRealtimeTransfers";
 
 const TokenTransferList = () => {
-  const { transactions: realtimeTxns } = useRealtimeSwaps();
-  const { transfers } = useRealtimeTransfers();
+  const { transactions: realtimeSwaps } = useRealtimeSwaps();
+  const { transfers: realtimeTransfers } = useRealtimeTransfers();
 
   // For no search queries applied
   const [transactionsLoading, setTransactionsLoading] = useState(false);
   const [transactions, setTransactions] = useState([]);
 
-  // For when any search query is applied
+  // For when a search query is applied
   const [searchTransactions, setSearchTransactions] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -38,16 +41,10 @@ const TokenTransferList = () => {
   const [searchHash, setSearchHash] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  
+
   const startAndEndNotIncomplete =
     (startDate === null && endDate === null) ||
     (startDate !== null && endDate !== null);
-
-  // useEffect(() => {
-  //   if (realtimeTxns && realtimeTxns.length > 0) {
-  //     setTransactions((prevTxns) => [...realtimeTxns, ...prevTxns]);
-  //   }
-  // }, [realtimeTxns]);
 
   useEffect(() => {
     if (!searchHash && startAndEndNotIncomplete) fetchTransactions();
@@ -73,13 +70,13 @@ const TokenTransferList = () => {
         { params }
       );
 
-      console.log(response.data)
+      console.log(response.data);
 
       if (searchHash || (startDate && endDate)) {
         setSearchTransactions(response.data);
         paginateSearchTransactions(response.data, 1);
       } else {
-        setNoMoreData(response.data.length === pageSize);
+        setNoMoreData(response.data.length < pageSize);
         setTransactions(response.data);
       }
       setTransactionsLoading(false);
@@ -132,128 +129,228 @@ const TokenTransferList = () => {
     }
   };
 
+  const [tabValue, setTabValue] = React.useState(0);
+
+  const handleChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  const renderTableContent = useMemo(() => {
+    switch (tabValue) {
+      case 0:
+        return (
+          <TableContainer component={Paper} style={{ marginBottom: "1rem" }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Transaction ID</TableCell>
+                  <TableCell>Fee (ETH)</TableCell>
+                  <TableCell>Fee (USDT)</TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {realtimeSwaps?.length > 0 ? (
+                  realtimeSwaps.map((tx, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{tx.hash?.slice(0, 20)}...</TableCell>
+                      <TableCell>{tx.feeETH}</TableCell>
+                      <TableCell>{tx.feeUSDT}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3} align="center">
+                      <Typography align="center" variant="body1">
+                        No real-time swaps yet.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        );
+      case 1:
+        return (
+          <TableContainer component={Paper} style={{ marginBottom: "1rem" }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Transaction ID</TableCell>
+                  <TableCell>Fee (ETH)</TableCell>
+                  <TableCell>Fee (USDT)</TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {realtimeTransfers?.length > 0 ? (
+                  realtimeTransfers.map((tx, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{tx.hash?.slice(0, 20)}...</TableCell>
+                      <TableCell>{tx.feeETH}</TableCell>
+                      <TableCell>{tx.feeUSDT}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3} align="center">
+                      <Typography align="center" variant="body1">
+                        No real-time transfers yet.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        );
+      default:
+        return (
+          <>
+            <Stack
+              direction="row"
+              spacing={2}
+              alignItems="center"
+              style={{ marginBottom: "1rem" }}
+            >
+              <TextField
+                label="Search by Transaction Hash"
+                variant="outlined"
+                value={searchHash}
+                onChange={(e) => setSearchHash(e.target.value)}
+                placeholder="Starts with..."
+                sx={{ flex: 1 }}
+                size="small"
+              />
+
+              <DatePicker
+                label="Start Date"
+                value={startDate}
+                onChange={(newValue) => setStartDate(newValue)}
+                slotProps={{ textField: { size: "small" } }}
+              />
+
+              <DatePicker
+                label="End Date"
+                value={endDate}
+                onChange={(newValue) => setEndDate(newValue)}
+                slotProps={{ textField: { size: "small" } }}
+              />
+
+              <Button variant="contained" onClick={handleSearch}>
+                Search
+              </Button>
+            </Stack>
+            <TableContainer component={Paper} style={{ marginBottom: "1rem" }}>
+              {transactionsLoading ? (
+                <Stack
+                  direction="row"
+                  justifyContent="center"
+                  style={{ margin: "1rem" }}
+                >
+                  <CircularProgress />
+                </Stack>
+              ) : (
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Transaction ID</TableCell>
+                      <TableCell>Fee (ETH)</TableCell>
+                      <TableCell>Fee (USDT)</TableCell>
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {transactions?.length > 0 ? (
+                      transactions.map((tx, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{tx.hash?.slice(0, 20)}...</TableCell>
+                          <TableCell>{tx.feeETH}</TableCell>
+                          <TableCell>{tx.feeUSDT}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={3} align="center">
+                          <Typography align="center" variant="body1">
+                            No transactions found.
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </TableContainer>
+            <Stack
+              direction="row"
+              justifyContent="center"
+              alignItems="center"
+              spacing={2}
+            >
+              <TextField
+                type="number"
+                value={pageSize}
+                onChange={handlePageSizeChange}
+                inputProps={{ min: 1, max: 150 }}
+                placeholder="Page Size"
+                sx={{ width: 100 }}
+                size="small"
+                variant="filled"
+                hiddenLabel
+              />
+              <Button
+                variant="contained"
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Pagination
+                count={currentPage} // Total number of pages
+                page={currentPage}
+                hidePrevButton
+                hideNextButton
+                color="primary"
+                shape="rounded"
+              />
+              <Button
+                variant="contained"
+                onClick={handleNextPage}
+                disabled={noMoreData}
+              >
+                Next
+              </Button>
+            </Stack>
+          </>
+        );
+    }
+  }, [tabValue, realtimeSwaps, transactions]);
+
   return (
     <div style={{ padding: "1rem" }}>
-      <Typography variant="h5" style={{ marginBottom: "1rem" }}>
+      <Typography
+        variant="h6"
+        style={{ marginBottom: "1rem", textAlign: "center" }}
+      >
         Ethereum Transactions
       </Typography>
-      <Stack
-        direction="row"
-        spacing={2}
-        alignItems="center"
-        style={{ marginBottom: "1rem" }}
-      >
-        <TextField
-          label="Search by Transaction Hash"
-          variant="outlined"
-          value={searchHash}
-          onChange={(e) => setSearchHash(e.target.value)}
-          placeholder="Starts with..."
-          sx={{ flex: 1 }}
-          size="small"
-        />
 
-        <DatePicker
-          label="Start Date"
-          value={startDate}
-          onChange={(newValue) => setStartDate(newValue)}
-          slotProps={{ textField: { size: 'small' } }}
-        />
-
-        <DatePicker
-          label="End Date"
-          value={endDate}
-          onChange={(newValue) => setEndDate(newValue)}
-          slotProps={{ textField: { size: 'small' } }}
-        />
-
-        <Button variant="contained" onClick={handleSearch}>
-          Search
-        </Button>
-      </Stack>
-
-      <TableContainer component={Paper} style={{ marginBottom: "1rem" }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Transaction ID</TableCell>
-              <TableCell>Fee (ETH)</TableCell>
-              <TableCell>Fee (USDT)</TableCell>
-            </TableRow>
-          </TableHead>
-          
-          {transactionsLoading ? (
-            <Stack direction="row" justifyContent="center">
-              <CircularProgress />
-            </Stack>
-          ) : (
-            <TableBody>
-              {realtimeTxns?.length > 0 && (
-                realtimeTxns.map((tx) => (
-                  <TableRow>
-                    <TableCell>{tx.hash?.slice(0, 20)}...</TableCell>
-                    <TableCell>{tx.feeETH}</TableCell>
-                    <TableCell>{tx.feeUSDT}</TableCell>
-                  </TableRow>
-                ))
-              )}
-              {transactions.length > 0 ? (
-                transactions.map((tx) => (
-                  <TableRow>
-                    <TableCell>{tx.hash?.slice(0, 20)}...</TableCell>
-                    <TableCell>{tx.feeETH}</TableCell>
-                    <TableCell>{tx.feeUSDT}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={3} align="center">
-                    <Typography align="center" variant="body1">
-                      No transactions found.
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          )}
-        </Table>
-      </TableContainer>
-
-      <Stack direction="row" justifyContent="center" alignItems="center" spacing={2}>
-        <TextField
-          type="number"
-          value={pageSize}
-          onChange={handlePageSizeChange}
-          inputProps={{ min: 1, max: 150 }}
-          placeholder="Page Size"
-          sx={{ width: 100 }}
-          size="small"
-          variant="filled"
-          hiddenLabel
-        />
-        <Button
-          variant="contained"
-          onClick={handlePreviousPage}
-          disabled={currentPage === 1}
-        >
-          Previous
-        </Button>
-        <Pagination
-          count={currentPage} // Total number of pages
-          page={currentPage}
-          hidePrevButton
-          hideNextButton
-          color="primary"
-          shape="rounded"
-        />
-        <Button
-          variant="contained"
-          onClick={handleNextPage}
-          disabled={noMoreData}
-        >
-          Next
-        </Button>
-      </Stack>
+      <Box sx={{ width: "100%" }} style={{ marginBottom: "1rem" }}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <Tabs
+            value={tabValue}
+            onChange={handleChange}
+            aria-label="transactions-tabs"
+          >
+            <Tab label="Realtime Swaps" />
+            <Tab label="Realtime Transfers" />
+            <Tab label="Historical Records" />
+          </Tabs>
+        </Box>
+      </Box>
+      {renderTableContent}
     </div>
   );
 };
