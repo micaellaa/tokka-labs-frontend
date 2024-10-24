@@ -1,4 +1,3 @@
-// TokenTransferComponent.js
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import {
@@ -32,6 +31,9 @@ const TokenTransferList = () => {
   const [transactionsLoading, setTransactionsLoading] = useState(false);
   const [transactions, setTransactions] = useState([]);
 
+  // For cached transactions based on the page number
+  const [cachedTransactions, setCachedTransactions] = useState({});
+
   // For when a search query is applied
   const [searchTransactions, setSearchTransactions] = useState([]);
 
@@ -51,6 +53,11 @@ const TokenTransferList = () => {
   }, [currentPage, pageSize]); // to handle changing pages too
 
   const fetchTransactions = async () => {
+    if (cachedTransactions[currentPage]) {
+      setTransactions(cachedTransactions[currentPage]);
+      return;
+    }
+
     setTransactionsLoading(true);
     try {
       const params = {
@@ -70,13 +77,17 @@ const TokenTransferList = () => {
         { params }
       );
 
-      console.log(response.data);
-
       if (searchHash || (startDate && endDate)) {
         setSearchTransactions(response.data);
         paginateSearchTransactions(response.data, 1);
       } else {
         setNoMoreData(response.data.length < pageSize);
+
+        setCachedTransactions((prevCache) => ({
+          ...prevCache,
+          [currentPage]: response.data,
+        }));
+
         setTransactions(response.data);
       }
       setTransactionsLoading(false);
@@ -88,7 +99,6 @@ const TokenTransferList = () => {
   };
 
   const paginateSearchTransactions = (allData, page) => {
-    console.log(allData);
     const startIndex = (page - 1) * pageSize;
     const paginatedData = allData.slice(startIndex, startIndex + pageSize);
     setTransactions(paginatedData);
@@ -125,6 +135,7 @@ const TokenTransferList = () => {
     if (newSize > 0) {
       setPageSize(newSize);
       setCurrentPage(1); // Reset to first page on page size change
+      setCachedTransactions({}); // Clear cache when changing page size
       fetchTransactions(); // Fetch transactions again with new page size
     }
   };
@@ -308,8 +319,9 @@ const TokenTransferList = () => {
                 Previous
               </Button>
               <Pagination
-                count={currentPage} // Total number of pages
+                count={cachedTransactions ? Object.keys(cachedTransactions).length : currentPage} // Total number of pages
                 page={currentPage}
+                onChange={(event, value) => setCurrentPage(value)}
                 hidePrevButton
                 hideNextButton
                 color="primary"
@@ -318,9 +330,9 @@ const TokenTransferList = () => {
               <Button
                 variant="contained"
                 onClick={handleNextPage}
-                disabled={noMoreData}
+                disabled={transactionsLoading || noMoreData}
               >
-                Next
+                Load More
               </Button>
             </Stack>
           </>
