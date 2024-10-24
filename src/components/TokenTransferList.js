@@ -17,6 +17,8 @@ import {
   Typography,
   Pagination,
   TextField,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
@@ -128,16 +130,6 @@ const TokenTransferList = () => {
     setNoMoreData(false);
     fetchTransactions();
     setCurrentPage(1);
-  };
-
-  const handlePageSizeChange = (e) => {
-    const newSize = parseInt(e.target.value, 10);
-    if (newSize > 0) {
-      setPageSize(newSize);
-      setCurrentPage(1); // Reset to first page on page size change
-      setCachedTransactions({}); // Clear cache when changing page size
-      fetchTransactions(); // Fetch transactions again with new page size
-    }
   };
 
   const [tabValue, setTabValue] = React.useState(0);
@@ -300,17 +292,25 @@ const TokenTransferList = () => {
               alignItems="center"
               spacing={2}
             >
-              <TextField
-                type="number"
-                value={pageSize}
-                onChange={handlePageSizeChange}
-                inputProps={{ min: 1, max: 150 }}
-                placeholder="Page Size"
-                sx={{ width: 100 }}
+              <Select
+                labelId="page-size-select-label"
                 size="small"
-                variant="filled"
-                hiddenLabel
-              />
+                value={pageSize}
+                onChange={(e) => {
+                  const newSize = parseInt(e.target.value);
+                  setPageSize(newSize);
+                  setCurrentPage(1); // Reset to first page on page size change
+                  setCachedTransactions({}); // Clear cache when changing page size
+                  fetchTransactions(); // Fetch transactions again with new page size
+                }}
+                label="Items per page"
+              >
+                {[10, 25, 50, 75, 100].map((size) => (
+                  <MenuItem key={size} value={size}>
+                    {size}
+                  </MenuItem>
+                ))}
+              </Select>
               <Button
                 variant="contained"
                 onClick={handlePreviousPage}
@@ -319,7 +319,11 @@ const TokenTransferList = () => {
                 Previous
               </Button>
               <Pagination
-                count={cachedTransactions ? Object.keys(cachedTransactions).length : currentPage} // Total number of pages
+                count={
+                  cachedTransactions
+                    ? Object.keys(cachedTransactions).length
+                    : currentPage
+                } // Total number of pages
                 page={currentPage}
                 onChange={(event, value) => setCurrentPage(value)}
                 hidePrevButton
