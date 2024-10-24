@@ -50,3 +50,7 @@ docker-compose up --build
 ```bash
 docker-compose down
 ```
+
+## Frontend Design Considerations
+
+This frontend is developed using React and Material UI, providing a user interface for real-time and historical transaction data from the Uniswap V3 WETH-USDC pool.
