@@ -1,13 +1,12 @@
-# Backend Service for Uniswap V3 Tracker
+# Frontend for Uniswap V3 Tracker
 
 ## Overview
-This backend service is part of the Tokka Labs Engineering Challenge. It tracks transactions in the Uniswap V3 WETH-USDC pool and calculates the transaction fee in USDT.
+This frontend is part of the Tokka Labs Engineering Challenge. It is a React-based UI that interacts with the backend to display transaction data from the Uniswap V3 WETH-USDC pool.
 
 ## Features
-- Fetches transaction details by hash
-- Supports fetching historical transactions
-- Calculates transaction fees in ETH and USDT
-- Provides RESTful endpoints for frontend integration
+- Real-time display of swaps and transfers
+- Historical transaction search by hash and date range
+- UI built with React and Material UI
 
 ## Prerequisites
 - [Node.js](https://nodejs.org/en/download/) (v14 or higher)
@@ -19,7 +18,6 @@ This backend service is part of the Tokka Labs Engineering Challenge. It tracks 
 ### 1. Clone the Repository
 ```bash
 git clone <repository-url>
-cd backend
 ```
 
 ### 2. Install Dependencies
@@ -29,29 +27,26 @@ npm install
 
 ### 3. Environment Variables
 Create a .env file in the root directory with the following variables:
-
 ```
-POOL_ADDRESS="0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
+PORT=5234
 
-# ETHERSCAN
-ETHERSCAN_API_KEY=<enter_your_etherscan_api_key_here>
-ETHERSCAN_URL="https://api.etherscan.io"
-
-# INFURA
-INFURA_API_KEY=<enter_your_infura_api_key_here>
-INFURA_API_KEY_SECRET=<enter_your_infura_api_key_secret_here>
-
-# PORT
-PORT=3333
+REACT_APP_SERVER_URL=http://localhost:3333
 ```
 
-### 4. Run the backend locally
+### 4. Run Frontend Locally
 ```bash
 npm start
 ```
+The frontend will be running on http://localhost:5234
 
-## Testing
-### 1. Run Unit Tests
+
+## Running with Docker Compose
+### 1. Build and Run with Docker Compose
 ```bash
-npm test
+docker-compose up --build
+```
+
+### 2. Stop the Frontend
+```bash
+docker-compose down
 ```
