@@ -3,6 +3,9 @@
 ## Overview
 This frontend is part of the Tokka Labs Engineering Challenge. It is a React-based UI that interacts with the backend to display transaction data from the Uniswap V3 WETH-USDC pool.
 
+## Related Repositories
+- [Backend](https://github.com/micaellaa/tokka-labs-backend)
+
 ## Features
 - Real-time display of swaps and transfers
 - Historical transaction search by hash and date range
@@ -17,7 +20,7 @@ This frontend is part of the Tokka Labs Engineering Challenge. It is a React-bas
 
 ### 1. Clone the Repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/micaellaa/tokka-labs-frontend.git
 ```
 
 ### 2. Install Dependencies
