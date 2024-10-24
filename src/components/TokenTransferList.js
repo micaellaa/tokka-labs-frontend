@@ -18,11 +18,12 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
-import { useRealtimeTxns } from "../hooks/useRealtimeTxns";
-import io from "socket.io-client";
+import { useRealtimeSwaps } from "../hooks/useRealtimeSwaps";
+import { useRealtimeTransfers } from "../hooks/useRealtimeTransfers";
 
 const TokenTransferList = () => {
-  const { transactions: realtimeTxns } = useRealtimeTxns();
+  const { transactions: realtimeTxns } = useRealtimeSwaps();
+  const { transfers } = useRealtimeTransfers();
 
   // For no search queries applied
   const [transactionsLoading, setTransactionsLoading] = useState(false);
@@ -37,11 +38,16 @@ const TokenTransferList = () => {
   const [searchHash, setSearchHash] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-
   
   const startAndEndNotIncomplete =
     (startDate === null && endDate === null) ||
     (startDate !== null && endDate !== null);
+
+  // useEffect(() => {
+  //   if (realtimeTxns && realtimeTxns.length > 0) {
+  //     setTransactions((prevTxns) => [...realtimeTxns, ...prevTxns]);
+  //   }
+  // }, [realtimeTxns]);
 
   useEffect(() => {
     if (!searchHash && startAndEndNotIncomplete) fetchTransactions();
@@ -85,6 +91,7 @@ const TokenTransferList = () => {
   };
 
   const paginateSearchTransactions = (allData, page) => {
+    console.log(allData);
     const startIndex = (page - 1) * pageSize;
     const paginatedData = allData.slice(startIndex, startIndex + pageSize);
     setTransactions(paginatedData);
@@ -174,16 +181,26 @@ const TokenTransferList = () => {
               <TableCell>Fee (USDT)</TableCell>
             </TableRow>
           </TableHead>
+          
           {transactionsLoading ? (
             <Stack direction="row" justifyContent="center">
               <CircularProgress />
             </Stack>
           ) : (
             <TableBody>
+              {realtimeTxns?.length > 0 && (
+                realtimeTxns.map((tx) => (
+                  <TableRow>
+                    <TableCell>{tx.hash?.slice(0, 20)}...</TableCell>
+                    <TableCell>{tx.feeETH}</TableCell>
+                    <TableCell>{tx.feeUSDT}</TableCell>
+                  </TableRow>
+                ))
+              )}
               {transactions.length > 0 ? (
                 transactions.map((tx) => (
                   <TableRow>
-                    <TableCell>{tx.hash.slice(0, 20)}...</TableCell>
+                    <TableCell>{tx.hash?.slice(0, 20)}...</TableCell>
                     <TableCell>{tx.feeETH}</TableCell>
                     <TableCell>{tx.feeUSDT}</TableCell>
                   </TableRow>
